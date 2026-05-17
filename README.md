@@ -172,7 +172,7 @@ claim, same answer, every time.
   `BEGIN IMMEDIATE` transaction, so two agents claiming a port at the same
   instant can't both grab the same number. The `UNIQUE` constraint on `port`
   is a schema-level backstop.
-- **Port range**: 3000–3999. Errors loudly past the ceiling.
+- **Port range**: 3000-3999. Errors loudly past the ceiling.
 - **OS bind check**: before handing out a port, `floo` actually tries to bind
   it. If an untracked process (Docker, a random script) holds it, `floo`
   skips that port without registering it. We never adopt something we didn't
