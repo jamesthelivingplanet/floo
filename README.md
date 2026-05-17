@@ -11,7 +11,7 @@ disappears, restarts on 3000 next time, and now my mental model - and my
 browser tabs, my `.env` files, my notes - is wrong.
 
 `floo` makes the assignment **sticky**. The same `(repo, service)` pair always
-gets the same port. Restart your dev server, switch branches, reboot - the port
+gets the same port. Restart your dev server, switch branches, reboot. The port
 comes back.
 
 ## How it works
