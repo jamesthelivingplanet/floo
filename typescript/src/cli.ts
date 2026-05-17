@@ -26,8 +26,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 import { repoRoot } from "./paths.js";
-import { claim, release, releaseAll, listClaims } from "./registry.js";
+import { claim, release, releaseAll, listClaims, gc } from "./registry.js";
 import { isPortFreeOnOs } from "./scanner.js";
+import { install as installAgentInstruction } from "./agent_setup.js";
 
 function getVersion(): string {
   try {
@@ -50,6 +51,10 @@ commands:
                            --prefer <port>
   release <service>      Release a claim
   release --all          Release every claim
+  gc                     Reclaim stale claims
+                           --older-than <duration> (default '-7 days')
+                           --dry-run
+  agent-setup            Write the floo instruction into ~/.claude/CLAUDE.md
 
 options:
   --version, -V          Print version and exit
@@ -106,6 +111,27 @@ function cmdRelease(args: string[], all: boolean): number {
   }
   process.stderr.write(`No claim for service '${service}' in this repo.\n`);
   return 1;
+}
+
+async function cmdGc(olderThan: string, dryRun: boolean): Promise<number> {
+  const cands = await gc(olderThan, dryRun);
+  if (cands.length === 0) {
+    process.stdout.write("Nothing to reclaim.\n");
+    return 0;
+  }
+  const verb = dryRun ? "Would reclaim" : "Reclaimed";
+  for (const c of cands) {
+    process.stdout.write(
+      `${verb}: port ${c.claim.port} (${c.claim.service} @ ${c.claim.repo_path}) - ${c.reason}\n`,
+    );
+  }
+  return 0;
+}
+
+function cmdAgentSetup(): number {
+  const { path, action } = installAgentInstruction();
+  process.stdout.write(`${action.charAt(0).toUpperCase() + action.slice(1)} floo block in ${path}\n`);
+  return 0;
 }
 
 function printClaimUsageWithState(): void {
@@ -173,6 +199,22 @@ async function main(argv: string[]): Promise<number> {
     });
     return cmdRelease(positionals, !!values.all);
   }
+  if (command === "gc") {
+    const { values } = parseArgs({
+      args: rest,
+      options: {
+        "older-than": { type: "string" },
+        "dry-run": { type: "boolean" },
+      },
+      allowPositionals: true,
+      strict: false,
+    });
+    return cmdGc(
+      (values["older-than"] as string | undefined) ?? "-7 days",
+      !!values["dry-run"],
+    );
+  }
+  if (command === "agent-setup") return cmdAgentSetup();
 
   process.stderr.write(`Unknown command: ${command}\n`);
   printHelp();
