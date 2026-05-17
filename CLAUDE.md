@@ -17,17 +17,16 @@ Implementation-only changes (refactors, perf) don't need a SPEC update.
 
 ## Layout
 
-- `SPEC.md` - contract
-- `python/` - canonical for `gc` and `agent-setup` (TS does not have these yet)
-- `typescript/` - uses Node 22+'s `node:sqlite`, no native deps
+- `SPEC.md` - contract (includes the canonical agent-setup instruction text)
+- `python/` - Python implementation
+- `typescript/` - TypeScript implementation, uses Node 22+'s `node:sqlite`,
+  no native deps
+
+Both implementations expose the same six commands at full parity:
+`claim`, `release`, `list`, `gc`, `agent-setup`, `version`.
 
 ## Style
 
 - No em dashes (`—`), en dashes (`–`), or ASCII hyphens used as parenthetical
   dashes. Use commas, periods, or parens.
 - Imperative commit messages.
-
-## TS parity gap
-
-`gc` and `agent-setup` are Python-only. When porting, read the Python source
-directly; only touch SPEC.md if you find a real ambiguity.

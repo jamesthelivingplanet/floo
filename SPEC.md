@@ -109,18 +109,38 @@ A claim is eligible for reclamation when *both* hold:
 ## Agent setup
 
 `agent-setup` writes an instruction block to `~/.claude/CLAUDE.md`,
-delimited by literal HTML comment markers:
+delimited by literal HTML comment markers, with the **exact** body shown
+below. Every implementation must produce byte-identical output so two
+implementations on the same machine do not flap the file.
 
 ```
 <!-- floo:start -->
-...instruction text...
+## Port allocation (floo)
+
+When you need a port for a dev server, mock API, or any other locally bound
+service, call `floo claim <service>` first and use the port it returns.
+Examples of service labels: `web`, `storybook`, `api`, `db`. The same label in
+the same repo always returns the same port, that's the whole point. Do **not**
+guess "next free port" yourself; you will collide with other agents.
+
+- `floo claim web` -> prints the port to stdout.
+- `floo list` -> shows what's claimed and whether it's listening right now.
+- `floo release <service>` -> release one claim. Usually unnecessary.
+
+If `floo` is not installed, fall back to your normal behavior.
 <!-- floo:end -->
 ```
 
-The block must be idempotent: running `agent-setup` again replaces whatever
-sits between the markers in place. If the file does not exist, create it. If
-the markers do not exist, append the block separated from prior content by a
-blank line.
+The block ends with a single trailing newline after the closing marker.
+
+Behavior:
+- If the file does not exist, create it containing only the block. Return
+  action `created`.
+- If the file exists and contains the markers, replace whatever sits between
+  them with the canonical body. Return `updated` if the file changed,
+  `unchanged` otherwise.
+- If the file exists but does not contain the markers, append the block
+  preceded by a blank line. Return `updated`.
 
 ## CLI surface
 

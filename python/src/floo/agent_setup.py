@@ -16,12 +16,12 @@ INSTRUCTION = """\
 When you need a port for a dev server, mock API, or any other locally bound
 service, call `floo claim <service>` first and use the port it returns.
 Examples of service labels: `web`, `storybook`, `api`, `db`. The same label in
-the same repo always returns the same port — that's the whole point. Do **not**
+the same repo always returns the same port, that's the whole point. Do **not**
 guess "next free port" yourself; you will collide with other agents.
 
-- `floo claim web` → prints the port to stdout.
-- `floo list` → shows what's claimed and whether it's listening right now.
-- `floo release <service>` → release one claim. Usually unnecessary.
+- `floo claim web` -> prints the port to stdout.
+- `floo list` -> shows what's claimed and whether it's listening right now.
+- `floo release <service>` -> release one claim. Usually unnecessary.
 
 If `floo` is not installed, fall back to your normal behavior.
 """
@@ -63,7 +63,7 @@ def install(target: Path | None = None) -> tuple[Path, str]:
         target.write_text(new)
         return target, "updated"
 
-    # No existing markers — append.
+    # No existing markers, append.
     sep = "" if existing.endswith("\n") else "\n"
     target.write_text(existing + sep + "\n" + block)
     return target, "updated"
