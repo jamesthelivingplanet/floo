@@ -5,6 +5,21 @@
  * Talks to the same SQLite registry as the Python implementation. See
  * SPEC.md for the shared contract.
  */
+
+// Suppress only Node's "ExperimentalWarning: SQLite ..." emit. We use
+// node:sqlite intentionally; users of this CLI shouldn't see the noise on
+// every invocation. All other warnings still propagate.
+const originalEmit = process.emit.bind(process);
+process.emit = ((event: string, ...args: unknown[]) => {
+  if (event === "warning") {
+    const w = args[0] as { name?: string; message?: string } | undefined;
+    if (w?.name === "ExperimentalWarning" && /SQLite/i.test(w.message ?? "")) {
+      return false;
+    }
+  }
+  return (originalEmit as (e: string, ...a: unknown[]) => boolean)(event, ...args);
+}) as typeof process.emit;
+
 import { parseArgs } from "node:util";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
