@@ -1,5 +1,5 @@
 {
-  "name": "floo",
+  "name": "@ajlebaron/floo",
   "version": "0.0.1",
   "description": "Sticky port assignments for parallel coding-agent dev servers.",
   "type": "module",
@@ -17,6 +17,14 @@
   "files": ["dist", "README.md"],
   "engines": {
     "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/ajlebaron/floo.git",
+    "directory": "typescript"
   },
   "scripts": {
     "build": "tsc",

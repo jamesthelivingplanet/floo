@@ -55,13 +55,27 @@ pipx install git+https://gitlab.com/ajlebaron/floo.git#subdirectory=python
 
 ### TypeScript (Node 22+)
 
+Pick one:
+
 ```sh
-cd typescript && npm install && npm run build
-npm link        # makes the `floo` binary available globally
+# from npm
+pnpm add -g @ajlebaron/floo
+# or
+npm install -g @ajlebaron/floo
+
+# from git, no registry needed
+pnpm add -g git+https://gitlab.com/ajlebaron/floo.git#path:typescript
+# or
+npm install -g git+https://gitlab.com/ajlebaron/floo.git#path:typescript
+
+# from a local checkout
+cd typescript && npm install && npm run build && npm link
 ```
 
-Once Node's built-in `node:sqlite` graduates from experimental, the npm
-publish flow will be trivial. For now this is the local-install route.
+The TS implementation uses Node 22+'s built-in `node:sqlite` (no native
+deps). Node emits an `ExperimentalWarning` for `node:sqlite` today; the CLI
+suppresses just that one warning so your stdout stays clean for
+`PORT=$(floo claim web)` and friends.
 
 Then tell your coding agent about it:
 
