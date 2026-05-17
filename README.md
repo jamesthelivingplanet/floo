@@ -43,17 +43,25 @@ the assignment, which is an accepted tradeoff.
 
 ## Install
 
-Requires Python 3.10+.
+floo ships in two implementations that share the same on-disk registry at
+`~/.local/state/floo/registry.db`. You can install either, both, or mix and
+match on the same machine. The shared contract lives in [SPEC.md](./SPEC.md).
+
+### Python (Python 3.10+)
 
 ```sh
-# with pipx (recommended)
-pipx install git+https://gitlab.com/ajlebaron/floo.git
-
-# or with a venv
-python3 -m venv ~/.venvs/floo
-~/.venvs/floo/bin/pip install git+https://gitlab.com/ajlebaron/floo.git
-ln -s ~/.venvs/floo/bin/floo ~/.local/bin/floo
+pipx install git+https://gitlab.com/ajlebaron/floo.git#subdirectory=python
 ```
+
+### TypeScript (Node 22+)
+
+```sh
+cd typescript && npm install && npm run build
+npm link        # makes the `floo` binary available globally
+```
+
+Once Node's built-in `node:sqlite` graduates from experimental, the npm
+publish flow will be trivial. For now this is the local-install route.
 
 Then tell your coding agent about it:
 
