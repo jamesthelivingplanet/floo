@@ -58,11 +58,6 @@ pipx install git+https://gitlab.com/ajlebaron/floo.git#subdirectory=python
 Pick one:
 
 ```sh
-# from npm
-pnpm add -g @ajlebaron/floo
-# or
-npm install -g @ajlebaron/floo
-
 # from git, no registry needed
 pnpm add -g git+https://gitlab.com/ajlebaron/floo.git#path:typescript
 # or
