@@ -5,7 +5,7 @@ One row = one active claim (a (repo_path, service) pair holding a port).
 Key design decisions:
   - Primary key is (repo_path, service): that's the natural lookup pattern.
   - port is UNIQUE: schema-level safety net against double-allocation bugs.
-  - Timestamps are ISO 8601 text — SQLite has no native datetime type, but
+  - Timestamps are ISO 8601 text - SQLite has no native datetime type, but
     its datetime() function understands this format so range queries work.
   - All mutating operations run inside a BEGIN IMMEDIATE transaction. That
     grabs the SQLite write lock up front, so the read-decide-write sequence
@@ -58,7 +58,7 @@ def _connect(path: Path | None = None) -> sqlite3.Connection:
     conn = sqlite3.connect(path, isolation_level=None)  # we manage txns manually
     # WAL: lets readers and a single writer run concurrently.
     conn.execute("PRAGMA journal_mode = WAL")
-    # Wait up to 5s for the write lock before raising — common in parallel use.
+    # Wait up to 5s for the write lock before raising - common in parallel use.
     conn.execute("PRAGMA busy_timeout = 5000")
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
@@ -158,7 +158,7 @@ def _pick_port(conn: sqlite3.Connection, prefer: int | None) -> int:
     taken = {row["port"] for row in conn.execute("SELECT port FROM claims")}
 
     # Preferred port: try it first if given and in range. If it's taken, fall
-    # through to the normal scan — caller treated --prefer as a hint, not a hard
+    # through to the normal scan - caller treated --prefer as a hint, not a hard
     # requirement.
     if prefer is not None and PORT_MIN <= prefer <= PORT_MAX:
         if prefer not in taken and is_port_free_on_os(prefer):
@@ -168,7 +168,7 @@ def _pick_port(conn: sqlite3.Connection, prefer: int | None) -> int:
         if candidate in taken:
             continue
         if not is_port_free_on_os(candidate):
-            continue  # untracked process is bound — skip, don't adopt.
+            continue  # untracked process is bound - skip, don't adopt.
         return candidate
 
     raise RuntimeError(
@@ -214,7 +214,7 @@ def release_all(*, conn: sqlite3.Connection | None = None) -> int:
 # ---------------------------------------------------------------------------
 
 def list_claims(*, conn: sqlite3.Connection | None = None) -> list[Claim]:
-    """Return all claims, ordered by port. Pure read — never mutates."""
+    """Return all claims, ordered by port. Pure read - never mutates."""
     owns_conn = conn is None
     if owns_conn:
         conn = _connect()
@@ -248,8 +248,8 @@ def find_gc_candidates(
     Three eligibility paths:
       1. last_seen_listening is older than the threshold.
       2. last_seen_listening is NULL *and* created_at is older than the
-         threshold — i.e., claimed long ago but a server was never observed.
-      3. The port is not currently in use by anyone — we re-probe at gc time
+         threshold - i.e., claimed long ago but a server was never observed.
+      3. The port is not currently in use by anyone - we re-probe at gc time
          to confirm before recommending reclamation. (Liveness vs. claim
          decoupling: a row may show "not seen" only because we never asked.)
     """
@@ -257,7 +257,7 @@ def find_gc_candidates(
     if owns_conn:
         conn = _connect()
     try:
-        # Wrap stored timestamps in datetime() too — our ISO 8601 with 'T' and
+        # Wrap stored timestamps in datetime() too - our ISO 8601 with 'T' and
         # 'Z' is valid for SQLite's parser but does NOT sort-compare cleanly
         # against datetime('now', ...) which uses 'YYYY-MM-DD HH:MM:SS'.
         # datetime() on both sides normalizes them.
@@ -274,10 +274,10 @@ def find_gc_candidates(
         for r in rows:
             c = _row_to_claim(r)
             # Re-probe at gc time. If a server is actively listening *right
-            # now*, refuse to reclaim regardless of the stale timestamp — the
+            # now*, refuse to reclaim regardless of the stale timestamp - the
             # user clearly still cares about this claim.
             if not is_port_free_on_os(c.port):
-                # Port is in use — update last_seen_listening so we don't
+                # Port is in use - update last_seen_listening so we don't
                 # keep flagging it on every gc run.
                 conn.execute(
                     "UPDATE claims SET last_seen_listening = ? "
