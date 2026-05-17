@@ -48,7 +48,7 @@ def cmd_list() -> int:
     if not claims:
         print("No claims yet. Run `floo claim <service>` in a repo to make one.")
         return 0
-    # Probe liveness per claim. Pure read at the registry level — we print
+    # Probe liveness per claim. Pure read at the registry level - we print
     # listening status without persisting it (gc handles persistence).
     from floo.scanner import is_port_free_on_os
     print(f"{'PORT':<6} {'LISTENING':<10} {'SERVICE':<14} REPO")
@@ -92,7 +92,7 @@ def cmd_gc(older_than: str, dry_run: bool) -> int:
         return 0
     verb = "Would reclaim" if dry_run else "Reclaimed"
     for c in cands:
-        print(f"{verb}: port {c.claim.port} ({c.claim.service} @ {c.claim.repo_path}) — {c.reason}")
+        print(f"{verb}: port {c.claim.port} ({c.claim.service} @ {c.claim.repo_path}) - {c.reason}")
     return 0
 
 
