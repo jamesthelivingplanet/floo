@@ -7,8 +7,8 @@ Sticky port assignments for parallel coding-agent dev servers.
 I work on multiple tickets at the same time with multiple Claude Code instances
 running in parallel. Each agent runs its own dev server. The agents pick "next
 free port" independently, so ports drift constantly: a server that was on 3002
-disappears, restarts on 3000 next time, and now my mental model - and my
-browser tabs, my `.env` files, my notes - is wrong.
+disappears, restarts on 3000 next time, and now my mental model (and my
+browser tabs, my `.env` files, my notes) is wrong.
 
 `floo` makes the assignment **sticky**. The same `(repo, service)` pair always
 gets the same port. Restart your dev server, switch branches, reboot. The port
