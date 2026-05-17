@@ -81,6 +81,89 @@ Bare `floo claim` or `floo release` print usage plus the current claims in
 your repo, so an agent (or you) can see what's available without a separate
 command.
 
+## Examples (Next.js)
+
+### Basic dev launch
+
+```sh
+cd ~/dev/myapp
+PORT=$(floo claim web)
+next dev -p $PORT
+```
+
+Next time, same repo, same command, same port. Restart, switch branches,
+reboot, still the same port.
+
+### As package.json scripts
+
+```json
+{
+  "scripts": {
+    "dev": "next dev -p $(floo claim web)",
+    "storybook": "storybook dev -p $(floo claim storybook)",
+    "ports": "floo list"
+  }
+}
+```
+
+```sh
+npm run dev         # next on its sticky port
+npm run storybook   # storybook on a different sticky port
+npm run ports       # show all claims and listening status
+```
+
+### Parallel work via git worktrees
+
+```sh
+cd ~/dev/myapp                            # feature-auth branch
+npm run dev                               # port 3001
+
+git worktree add ../myapp-billing feature-billing
+cd ../myapp-billing
+npm run dev                               # port 3003, automatically
+```
+
+Two Next.js dev servers, same repo, side by side. Distinct directories give
+distinct ports without any configuration.
+
+### Inspecting state
+
+```sh
+$ floo list
+PORT   LISTENING  SERVICE        REPO
+3001   yes        web            /home/me/dev/myapp
+3002   no         storybook      /home/me/dev/myapp
+3003   yes        web            /home/me/dev/myapp-billing
+```
+
+`LISTENING=no` means the row is claimed but the server is not running right
+now. The reservation persists.
+
+### Capturing the port for env vars
+
+If you need the value elsewhere (an absolute URL in `NEXT_PUBLIC_APP_URL`, a
+log line, a helper script), capture it once and export:
+
+```sh
+# .envrc, if you use direnv
+export PORT=$(floo claim web)
+export NEXT_PUBLIC_APP_URL="http://localhost:$PORT"
+```
+
+### What an agent does
+
+After `floo agent-setup`, Claude Code sees the instruction in
+`~/.claude/CLAUDE.md` and the typical sequence becomes:
+
+```
+> floo claim web
+3001
+> next dev -p 3001
+```
+
+The agent does not have to remember which port "this feature" was on. Same
+claim, same answer, every time.
+
 ## Design notes
 
 - **Storage**: one SQLite file at `~/.local/state/floo/registry.db`. No daemon.
