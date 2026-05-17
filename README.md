@@ -7,11 +7,11 @@ Sticky port assignments for parallel coding-agent dev servers.
 I work on multiple tickets at the same time with multiple Claude Code instances
 running in parallel. Each agent runs its own dev server. The agents pick "next
 free port" independently, so ports drift constantly: a server that was on 3002
-disappears, restarts on 3000 next time, and now my mental model — and my
-browser tabs, my `.env` files, my notes — is wrong.
+disappears, restarts on 3000 next time, and now my mental model - and my
+browser tabs, my `.env` files, my notes - is wrong.
 
 `floo` makes the assignment **sticky**. The same `(repo, service)` pair always
-gets the same port. Restart your dev server, switch branches, reboot — the port
+gets the same port. Restart your dev server, switch branches, reboot - the port
 comes back.
 
 ## How it works
@@ -62,7 +62,7 @@ floo agent-setup
 ```
 
 This appends a marker block to `~/.claude/CLAUDE.md` explaining when to call
-`floo claim`. The block is idempotent — running it again updates in place
+`floo claim`. The block is idempotent - running it again updates in place
 rather than duplicating.
 
 ## Commands
@@ -96,7 +96,7 @@ command.
   claim.
 - **Reclamation**: claims are sticky by default. `floo gc` reclaims rows that
   haven't been seen listening for the grace window (default 7 days), with an
-  extra safety check that re-probes the port at gc time — if a server is
+  extra safety check that re-probes the port at gc time - if a server is
   actively listening right now, the row stays. Run it whenever, or schedule
   it via cron:
 
