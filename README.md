@@ -55,16 +55,10 @@ pipx install git+https://gitlab.com/ajlebaron/floo.git#subdirectory=python
 
 ### TypeScript (Node 22+)
 
-Pick one:
-
 ```sh
-# from git, no registry needed
-pnpm add -g git+https://gitlab.com/ajlebaron/floo.git#path:typescript
-# or
-npm install -g git+https://gitlab.com/ajlebaron/floo.git#path:typescript
-
-# from a local checkout
-cd typescript && npm install && npm run build && npm link
+git clone https://gitlab.com/ajlebaron/floo.git
+cd floo/typescript
+npm install && npm run build && npm link
 ```
 
 The TS implementation uses Node 22+'s built-in `node:sqlite` (no native
