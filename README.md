@@ -82,6 +82,15 @@ makepkg -si
 The AUR package builds floo from the published `floo-ports` source with bundled
 SQLite, so it has no system libsqlite3 dependency.
 
+Before floo is published to the AUR, you can build the same package straight
+from this repo with `makepkg`:
+
+```sh
+git clone https://gitlab.com/ajlebaron/floo.git
+cd floo/packaging/aur
+makepkg -si
+```
+
 ### crates.io
 
 ```sh
