@@ -1,0 +1,33 @@
+# Maintainer: Alberto Le Baron Velazco <jimmleb178@gmail.com>
+pkgname=floo
+pkgver=0.0.2
+pkgrel=1
+pkgdesc="Sticky port assignments for parallel coding-agent dev servers"
+arch=('x86_64' 'aarch64')
+url="https://gitlab.com/ajlebaron/floo"
+license=('MIT')
+makedepends=('cargo')
+# rusqlite bundles and compiles SQLite from C. makepkg's default link-time
+# optimization (LTO) leaves the bundled SQLite symbols in LTO-only objects that
+# the Rust link step cannot resolve, so disable LTO for this package.
+options=(!lto)
+source=("floo-ports-$pkgver.crate::https://static.crates.io/crates/floo-ports/floo-ports-$pkgver.crate")
+sha256sums=('984974d9030252b7286eace516e6ed8ae35e9f3605f60147b42b5b0dde3a9274')
+
+prepare() {
+  cd "floo-ports-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "floo-ports-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release
+}
+
+package() {
+  cd "floo-ports-$pkgver"
+  install -Dm0755 -t "$pkgdir/usr/bin/" target/release/floo
+}

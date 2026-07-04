@@ -1,0 +1,14 @@
+pkgbase = floo
+	pkgdesc = Sticky port assignments for parallel coding-agent dev servers
+	pkgver = 0.0.2
+	pkgrel = 1
+	url = https://gitlab.com/ajlebaron/floo
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	makedepends = cargo
+	options = !lto
+	source = floo-ports-0.0.2.crate::https://static.crates.io/crates/floo-ports/floo-ports-0.0.2.crate
+	sha256sums = 984974d9030252b7286eace516e6ed8ae35e9f3605f60147b42b5b0dde3a9274
+
+pkgname = floo
