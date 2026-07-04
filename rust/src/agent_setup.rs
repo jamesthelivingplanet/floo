@@ -85,6 +85,74 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
+    /// Extract the canonical agent-setup block from the top-level SPEC.md.
+    ///
+    /// SPEC.md is the single source of truth for the block text. This finds
+    /// the fenced code block that contains the floo markers and returns its
+    /// body verbatim, including the markers and the single trailing newline.
+    /// The golden test below pins `build_block()` to this exact text so the
+    /// Rust source and SPEC.md cannot drift independently.
+    fn canonical_block_from_spec() -> String {
+        let spec = include_str!("../../SPEC.md");
+
+        let start = spec
+            .find(MARKER_START)
+            .expect("SPEC.md must contain the floo:start marker");
+        // The opening code fence is the last "```" before the start marker.
+        let fence_open = spec[..start]
+            .rfind("```")
+            .expect("SPEC.md must open a code fence before the floo:start marker");
+        // Skip the whole opening fence line ("```" plus any language hint).
+        let fence_line_end = spec[fence_open..]
+            .find('\n')
+            .expect("SPEC.md opening fence must end with a newline");
+        let content_start = fence_open + fence_line_end + 1;
+
+        let end = spec[content_start..]
+            .find(MARKER_END)
+            .expect("SPEC.md must contain the floo:end marker");
+        let end = content_start + end;
+        // Include the single trailing newline after the closing marker, but
+        // stop before the closing code fence line.
+        let marker_line_end = spec[end..]
+            .find('\n')
+            .map(|i| end + i + 1)
+            .unwrap_or(spec.len());
+
+        spec[content_start..marker_line_end].to_string()
+    }
+
+    /// Golden test: the block we generate must be byte-identical to the
+    /// canonical text in SPEC.md (markers, body, single trailing newline).
+    /// Changing `INSTRUCTION` (or SPEC.md) on one side without the other
+    /// fails this test.
+    #[test]
+    fn build_block_is_byte_identical_to_spec() {
+        let expected = canonical_block_from_spec();
+
+        // Structural sanity checks so a SPEC parsing bug fails loudly rather
+        // than accidentally matching an unrelated slice of the document.
+        assert!(
+            expected.starts_with(MARKER_START),
+            "parsed SPEC block must start with the start marker; got: {expected:?}"
+        );
+        assert!(
+            expected.ends_with(&format!("{MARKER_END}\n")),
+            "parsed SPEC block must end with the end marker and a single \
+             newline; got: {expected:?}"
+        );
+
+        let actual = build_block();
+        assert_eq!(
+            actual, expected,
+            "build_block() must be byte-identical to the canonical block in \
+             SPEC.md. If you changed the instruction text, update SPEC.md too \
+             (or vice versa).\n\
+             --- expected (from SPEC.md) ---\n{expected}\
+             --- actual (from build_block) ---\n{actual}"
+        );
+    }
+
     #[test]
     fn test_creates_when_missing() {
         let dir = tempdir().unwrap();
