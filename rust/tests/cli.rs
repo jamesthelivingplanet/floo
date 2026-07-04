@@ -145,3 +145,76 @@ fn test_list_empty_registry() {
     assert_eq!(output.status.code(), Some(0));
     assert!(stdout_str(&output).contains("No claims yet"));
 }
+
+#[test]
+fn test_db_flag_overrides_registry_location() {
+    let state = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    // Nested, not-yet-existing path, to exercise parent-dir creation too.
+    let custom_db = state
+        .path()
+        .join("custom")
+        .join("nested")
+        .join("registry.db");
+
+    let claim = floo_cmd(state.path(), home.path(), state.path())
+        .args(["claim", "web", "--db", custom_db.to_str().unwrap()])
+        .output()
+        .unwrap();
+    assert_eq!(claim.status.code(), Some(0));
+    assert!(
+        custom_db.is_file(),
+        "custom db file should have been created"
+    );
+
+    let xdg_default = state.path().join("floo").join("registry.db");
+    assert!(
+        !xdg_default.exists(),
+        "the XDG default registry should not have been touched"
+    );
+
+    let list = floo_cmd(state.path(), home.path(), state.path())
+        .args(["list", "--db", custom_db.to_str().unwrap(), "--json"])
+        .output()
+        .unwrap();
+    assert_eq!(list.status.code(), Some(0));
+    let list_out = stdout_str(&list);
+    assert!(list_out.contains("\"service\": \"web\""));
+}
+
+#[test]
+fn test_floo_db_env_overrides_registry_location() {
+    let state = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    let custom_db = state
+        .path()
+        .join("envdir")
+        .join("nested")
+        .join("registry.db");
+
+    let claim = floo_cmd(state.path(), home.path(), state.path())
+        .env("FLOO_DB", &custom_db)
+        .args(["claim", "web"])
+        .output()
+        .unwrap();
+    assert_eq!(claim.status.code(), Some(0));
+    assert!(
+        custom_db.is_file(),
+        "custom db file should have been created"
+    );
+
+    let xdg_default = state.path().join("floo").join("registry.db");
+    assert!(
+        !xdg_default.exists(),
+        "the XDG default registry should not have been touched"
+    );
+
+    let list = floo_cmd(state.path(), home.path(), state.path())
+        .env("FLOO_DB", &custom_db)
+        .args(["list", "--json"])
+        .output()
+        .unwrap();
+    assert_eq!(list.status.code(), Some(0));
+    let list_out = stdout_str(&list);
+    assert!(list_out.contains("\"service\": \"web\""));
+}

@@ -35,6 +35,9 @@ fn main() -> ExitCode {
 }
 
 fn run(args: &[String]) -> i32 {
+    let (db_override, args) = extract_db_override(args);
+    let db_override = db_override.as_deref();
+
     if args.is_empty() {
         print_help();
         return 0;
@@ -53,16 +56,34 @@ fn run(args: &[String]) -> i32 {
             println!("floo {VERSION}");
             0
         }
-        "list" => cmd_list(&args[1..]),
-        "claim" => cmd_claim(&args[1..]),
-        "release" => cmd_release(&args[1..]),
-        "gc" => cmd_gc(&args[1..]),
+        "list" => cmd_list(&args[1..], db_override),
+        "claim" => cmd_claim(&args[1..], db_override),
+        "release" => cmd_release(&args[1..], db_override),
+        "gc" => cmd_gc(&args[1..], db_override),
         "agent-setup" => cmd_agent_setup(),
         other => {
             eprintln!("Unknown command: {other}");
             2
         }
     }
+}
+
+/// Pull the global `--db <path>` option out of `args`, wherever it appears,
+/// returning its value (if present) and the remaining args in order.
+fn extract_db_override(args: &[String]) -> (Option<String>, Vec<String>) {
+    let mut db_override = None;
+    let mut rest = Vec::with_capacity(args.len());
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "--db" {
+            i += 1;
+            db_override = args.get(i).cloned();
+        } else {
+            rest.push(args[i].clone());
+        }
+        i += 1;
+    }
+    (db_override, rest)
 }
 
 fn print_help() {
@@ -84,13 +105,18 @@ commands:
   agent-setup            Write the floo instruction into ~/.claude/CLAUDE.md
 
 options:
+  --db <path>            Use this registry file instead of the XDG default
   --version, -V          Print version and exit
-  -h, --help             Show this help"
+  -h, --help             Show this help
+
+The registry path is resolved as: --db <path> if given, else the FLOO_DB
+environment variable if set, else the XDG default
+($XDG_STATE_HOME/floo/registry.db or ~/.local/state/floo/registry.db)."
     );
 }
 
-fn open_db() -> Result<rusqlite::Connection, FlooError> {
-    let path = paths::db_path()?;
+fn open_db(db_override: Option<&str>) -> Result<rusqlite::Connection, FlooError> {
+    let path = paths::db_path_with_override(db_override)?;
     registry::connect(&path)
 }
 
@@ -103,9 +129,9 @@ fn current_repo_path() -> Result<String, FlooError> {
 // command handlers
 // ---------------------------------------------------------------------------
 
-fn cmd_list(args: &[String]) -> i32 {
+fn cmd_list(args: &[String], db_override: Option<&str>) -> i32 {
     let json = args.iter().any(|a| a == "--json");
-    let conn = match open_db() {
+    let conn = match open_db(db_override) {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
@@ -176,10 +202,10 @@ fn parse_claim_args(args: &[String]) -> ClaimArgs {
     }
 }
 
-fn cmd_claim(raw_args: &[String]) -> i32 {
+fn cmd_claim(raw_args: &[String], db_override: Option<&str>) -> i32 {
     let args = parse_claim_args(raw_args);
     if args.service.is_none() {
-        return print_claim_usage_with_state();
+        return print_claim_usage_with_state(db_override);
     }
     let service = args.service.unwrap();
 
@@ -187,7 +213,7 @@ fn cmd_claim(raw_args: &[String]) -> i32 {
         Ok(rp) => rp,
         Err(e) => return fail(&e),
     };
-    let conn = match open_db() {
+    let conn = match open_db(db_override) {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
@@ -229,10 +255,10 @@ fn parse_release_args(args: &[String]) -> ReleaseArgs {
     ReleaseArgs { service, all }
 }
 
-fn cmd_release(raw_args: &[String]) -> i32 {
+fn cmd_release(raw_args: &[String], db_override: Option<&str>) -> i32 {
     let args = parse_release_args(raw_args);
 
-    let conn = match open_db() {
+    let conn = match open_db(db_override) {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
@@ -248,7 +274,7 @@ fn cmd_release(raw_args: &[String]) -> i32 {
     }
 
     let Some(service) = args.service else {
-        return print_release_usage_with_state();
+        return print_release_usage_with_state(db_override);
     };
 
     let rp = match current_repo_path() {
@@ -297,9 +323,9 @@ fn parse_gc_args(args: &[String]) -> GcArgs {
     }
 }
 
-fn cmd_gc(raw_args: &[String]) -> i32 {
+fn cmd_gc(raw_args: &[String], db_override: Option<&str>) -> i32 {
     let args = parse_gc_args(raw_args);
-    let conn = match open_db() {
+    let conn = match open_db(db_override) {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
@@ -354,13 +380,13 @@ fn cmd_agent_setup() -> i32 {
 // helpers
 // ---------------------------------------------------------------------------
 
-fn print_claim_usage_with_state() -> i32 {
+fn print_claim_usage_with_state(db_override: Option<&str>) -> i32 {
     println!("usage: floo claim <service> [--prefer PORT]");
     let rp = match current_repo_path() {
         Ok(rp) => rp,
         Err(e) => return fail(&e),
     };
-    let conn = match open_db() {
+    let conn = match open_db(db_override) {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
@@ -379,13 +405,13 @@ fn print_claim_usage_with_state() -> i32 {
     0
 }
 
-fn print_release_usage_with_state() -> i32 {
+fn print_release_usage_with_state(db_override: Option<&str>) -> i32 {
     println!("usage: floo release <service> | --all");
     let rp = match current_repo_path() {
         Ok(rp) => rp,
         Err(e) => return fail(&e),
     };
-    let conn = match open_db() {
+    let conn = match open_db(db_override) {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
@@ -563,5 +589,47 @@ mod tests {
         let args = parse_gc_args(&strs(&["--older-than", "-1 hour", "--dry-run"]));
         assert_eq!(args.older_than, "-1 hour");
         assert!(args.dry_run);
+    }
+
+    #[test]
+    fn test_extract_db_override_absent() {
+        let (db, rest) = extract_db_override(&strs(&["claim", "web"]));
+        assert_eq!(db, None);
+        assert_eq!(rest, strs(&["claim", "web"]));
+    }
+
+    #[test]
+    fn test_extract_db_override_leading() {
+        let (db, rest) = extract_db_override(&strs(&["--db", "/tmp/reg.db", "claim", "web"]));
+        assert_eq!(db, Some("/tmp/reg.db".to_string()));
+        assert_eq!(rest, strs(&["claim", "web"]));
+    }
+
+    #[test]
+    fn test_extract_db_override_trailing() {
+        let (db, rest) = extract_db_override(&strs(&["claim", "web", "--db", "/tmp/reg.db"]));
+        assert_eq!(db, Some("/tmp/reg.db".to_string()));
+        assert_eq!(rest, strs(&["claim", "web"]));
+    }
+
+    #[test]
+    fn test_extract_db_override_middle() {
+        let (db, rest) = extract_db_override(&strs(&[
+            "claim",
+            "--db",
+            "/tmp/reg.db",
+            "web",
+            "--prefer",
+            "3500",
+        ]));
+        assert_eq!(db, Some("/tmp/reg.db".to_string()));
+        assert_eq!(rest, strs(&["claim", "web", "--prefer", "3500"]));
+    }
+
+    #[test]
+    fn test_extract_db_override_missing_value() {
+        let (db, rest) = extract_db_override(&strs(&["claim", "web", "--db"]));
+        assert_eq!(db, None);
+        assert_eq!(rest, strs(&["claim", "web"]));
     }
 }

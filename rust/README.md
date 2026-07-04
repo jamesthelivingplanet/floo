@@ -5,7 +5,9 @@ Sticky port assignments for parallel coding-agent dev servers. The same
 server, switching branches, or rebooting doesn't shuffle your ports around.
 
 The mapping is backed by a local SQLite registry at
-`~/.local/state/floo/registry.db`.
+`~/.local/state/floo/registry.db`. Override the location with the global
+`--db <path>` flag or the `FLOO_DB` environment variable (precedence: `--db`,
+then `FLOO_DB`, then the default above).
 
 ## Install
 
@@ -37,6 +39,9 @@ floo release --all
 floo gc [--older-than '-7 days'] [--dry-run]
 floo agent-setup
 floo version
+
+# any command accepts a global --db <path> to target a specific registry
+floo list --db /tmp/scratch.db
 ```
 
 ## Use it in a Next.js / React app

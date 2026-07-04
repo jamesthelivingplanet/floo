@@ -244,6 +244,11 @@ claim, same answer, every time.
 
 - **Storage**: one SQLite file at `~/.local/state/floo/registry.db`. No daemon.
   The CLI opens the DB, does its work, closes. Survives reboots.
+- **Overriding the registry location**: pass a global `--db <path>` flag
+  (works with any subcommand, anywhere in the argument list), or set the
+  `FLOO_DB` environment variable. Precedence is `--db` flag, then `FLOO_DB`,
+  then the XDG default above. The parent directory is created automatically
+  if it doesn't exist, same as the default location.
 - **Race safety**: every mutating call wraps its read-decide-write in a
   `BEGIN IMMEDIATE` transaction, so two agents claiming a port at the same
   instant can't both grab the same number. The `UNIQUE` constraint on `port`
