@@ -47,6 +47,41 @@ floo is a single Rust binary backed by an on-disk SQLite registry at
 `~/.local/state/floo/registry.db`. The on-disk contract lives in
 [SPEC.md](./SPEC.md).
 
+### Homebrew (macOS)
+
+```sh
+brew install ajlebaron/floo/floo
+```
+
+If you have not added the tap yet, Homebrew will prompt you to; you can also add
+it explicitly first:
+
+```sh
+brew tap ajlebaron/floo https://gitlab.com/ajlebaron/homebrew-floo.git
+brew install floo
+```
+
+The formula builds floo from source (SQLite is bundled, so there is no system
+libsqlite3 dependency). The crates.io package is named `floo-ports`, but the
+installed binary is named `floo`.
+
+### AUR (Arch Linux)
+
+```sh
+paru -S floo        # or: yay -S floo
+```
+
+or build it by hand:
+
+```sh
+git clone https://aur.archlinux.org/floo.git
+cd floo
+makepkg -si
+```
+
+The AUR package builds floo from the published `floo-ports` source with bundled
+SQLite, so it has no system libsqlite3 dependency.
+
 ### crates.io
 
 ```sh
