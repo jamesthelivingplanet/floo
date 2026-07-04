@@ -218,3 +218,48 @@ fn test_floo_db_env_overrides_registry_location() {
     let list_out = stdout_str(&list);
     assert!(list_out.contains("\"service\": \"web\""));
 }
+
+#[test]
+fn test_claim_help_is_command_specific() {
+    let output = run_isolated(&["claim", "--help"]);
+    assert_eq!(output.status.code(), Some(0));
+    let out = stdout_str(&output);
+    assert!(out.contains("--prefer"));
+    assert!(out.contains("--json"));
+}
+
+#[test]
+fn test_gc_help_is_command_specific() {
+    let output = run_isolated(&["gc", "--help"]);
+    assert_eq!(output.status.code(), Some(0));
+    let out = stdout_str(&output);
+    assert!(out.contains("--older-than"));
+    assert!(out.contains("--dry-run"));
+}
+
+#[test]
+fn test_completions_bash() {
+    let output = run_isolated(&["completions", "bash"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("floo"));
+}
+
+#[test]
+fn test_completions_zsh() {
+    let output = run_isolated(&["completions", "zsh"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("floo"));
+}
+
+#[test]
+fn test_completions_fish() {
+    let output = run_isolated(&["completions", "fish"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("floo"));
+}
+
+#[test]
+fn test_completions_invalid_shell() {
+    let output = run_isolated(&["completions", "notashell"]);
+    assert_ne!(output.status.code(), Some(0));
+}

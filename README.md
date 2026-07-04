@@ -158,6 +158,7 @@ floo release <service>                   # release one
 floo release --all                       # nuke everything
 floo gc [--older-than '-7 days'] [--dry-run] # reclaim stale claims
 floo agent-setup                         # write the instruction into ~/.claude/CLAUDE.md
+floo completions <shell>                 # print a shell completion script (bash, zsh, fish)
 floo version
 floo --version
 ```
@@ -168,6 +169,10 @@ floo --version
 Bare `floo claim` or `floo release` print usage plus the current claims in
 your repo, so an agent (or you) can see what's available without a separate
 command.
+
+Every subcommand has tailored `--help`, and `floo completions <shell>` prints a
+completion script for bash, zsh, or fish. For example, `floo completions bash >
+~/.local/share/bash-completion/completions/floo`.
 
 ## Examples (Next.js)
 
