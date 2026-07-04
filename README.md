@@ -262,7 +262,9 @@ $ floo list --json
 ```
 
 Without `--json`, output is unchanged, so `PORT=$(floo claim web)` still
-returns a bare number.
+returns a bare number. When the same (repo, service) is claimed again, floo
+prints a short note to stderr (`reusing existing claim for web -> 3001`) so
+the reuse is visible; stdout stays the bare port, so capture is unaffected.
 
 ### Capturing the port for env vars
 

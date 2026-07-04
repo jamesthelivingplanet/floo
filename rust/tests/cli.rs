@@ -133,6 +133,46 @@ fn test_claim_is_idempotent_across_invocations() {
 }
 
 #[test]
+fn test_claim_reuse_prints_stderr_note_but_bare_port_on_stdout() {
+    let state = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+
+    let first = floo_cmd(state.path(), home.path(), state.path())
+        .args(["claim", "web"])
+        .output()
+        .unwrap();
+    let second = floo_cmd(state.path(), home.path(), state.path())
+        .args(["claim", "web"])
+        .output()
+        .unwrap();
+
+    assert_eq!(first.status.code(), Some(0));
+    assert_eq!(second.status.code(), Some(0));
+
+    let port: u16 = stdout_str(&first)
+        .trim_end()
+        .parse()
+        .expect("stdout should be a bare port number");
+    assert!((3000..=3999).contains(&port));
+    assert_eq!(
+        stdout_str(&first),
+        stdout_str(&second),
+        "reuse must not change stdout"
+    );
+
+    assert!(
+        !stderr_str(&first).contains("reusing existing claim"),
+        "a fresh claim must not print a reuse note"
+    );
+    let err2 = stderr_str(&second);
+    assert!(
+        err2.contains("reusing existing claim"),
+        "expected reuse note on stderr, got: {err2}"
+    );
+    assert!(err2.contains(&port.to_string()));
+}
+
+#[test]
 fn test_release_missing_claim() {
     let output = run_isolated(&["release", "nope"]);
     assert_eq!(output.status.code(), Some(1));

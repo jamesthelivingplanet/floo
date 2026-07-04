@@ -178,7 +178,10 @@ given shell (`bash`, `zsh`, or `fish`), for the user to source or install.
 Every subcommand also supports a tailored `--help`.
 
 `floo claim <service>` prints the port number to stdout on its own line and
-nothing else (so it can be captured with `PORT=$(floo claim web)`).
+nothing else (so it can be captured with `PORT=$(floo claim web)`). When it
+returns an existing claim for the same (repo, service), it also prints a
+short note to stderr (for example `reusing existing claim for web -> 3000`)
+so the reuse is visible; stdout is unaffected.
 
 ## JSON output
 
