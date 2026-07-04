@@ -39,6 +39,25 @@ floo agent-setup
 floo version
 ```
 
+## Use it in a Next.js / React app
+
+```json
+{
+  "scripts": {
+    "dev": "next dev -p $(floo claim web)",
+    "storybook": "storybook dev -p $(floo claim storybook)"
+  }
+}
+```
+
+`floo claim web` returns the same port every time for this repo, so
+`npm run dev` always binds the same port across restarts, branch switches,
+and reboots. A git worktree of the same repo gets a different port
+automatically, so parallel work never collides.
+
+The same pattern works for any framework that takes a port flag (Vite,
+Remix, plain node), not just Next.js.
+
 ## Documentation
 
 This page is the crates.io summary. For the full picture, including the
