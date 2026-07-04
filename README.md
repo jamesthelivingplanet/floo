@@ -47,6 +47,17 @@ floo is a single Rust binary backed by an on-disk SQLite registry at
 `~/.local/state/floo/registry.db`. The on-disk contract lives in
 [SPEC.md](./SPEC.md).
 
+### crates.io
+
+```sh
+cargo install floo-ports
+```
+
+The package on crates.io is named `floo-ports` (the name `floo` was already
+taken), but the installed binary is still named `floo`. If you'd rather
+skip compiling from source, `cargo binstall floo-ports` fetches a prebuilt
+binary instead, provided you have `cargo-binstall` installed.
+
 ### Prebuilt binary (no toolchain required)
 
 Every tagged release publishes prebuilt binaries for Linux and macOS, so you

@@ -1,9 +1,15 @@
 [package]
-name = "floo"
-version = "0.0.1"
+name = "floo-ports"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 description = "Sticky port assignments for parallel coding-agent dev servers."
+authors = ["Alberto Le Baron Velazco <jimmleb178@gmail.com>"]
+repository = "https://gitlab.com/ajlebaron/floo"
+homepage = "https://gitlab.com/ajlebaron/floo"
+readme = "README.md"
+keywords = ["port", "dev-server", "cli", "developer-tools", "sqlite"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "floo"
