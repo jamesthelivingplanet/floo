@@ -161,6 +161,7 @@ floo [--db <path>] release --all
 floo [--db <path>] list [--json]
 floo [--db <path>] gc [--older-than <duration>] [--dry-run]
 floo agent-setup
+floo completions <shell>
 floo version
 floo --version
 ```
@@ -171,6 +172,10 @@ order in "On-disk location".
 
 Bare `floo claim` and `floo release` print usage plus the current claims in
 the active repo. They do not error.
+
+`floo completions <shell>` prints a shell completion script to stdout for the
+given shell (`bash`, `zsh`, or `fish`), for the user to source or install.
+Every subcommand also supports a tailored `--help`.
 
 `floo claim <service>` prints the port number to stdout on its own line and
 nothing else (so it can be captured with `PORT=$(floo claim web)`).
