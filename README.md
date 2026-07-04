@@ -47,6 +47,34 @@ floo is a single Rust binary backed by an on-disk SQLite registry at
 `~/.local/state/floo/registry.db`. The on-disk contract lives in
 [SPEC.md](./SPEC.md).
 
+### Prebuilt binary (no toolchain required)
+
+Every tagged release publishes prebuilt binaries for Linux and macOS, so you
+can run floo without a Rust toolchain or a C compiler. The binaries bundle
+SQLite, so there is no system libsqlite3 dependency.
+
+Supported targets:
+
+- `floo-x86_64-unknown-linux-gnu` (Linux, Intel/AMD)
+- `floo-aarch64-unknown-linux-gnu` (Linux, ARM64)
+- `floo-x86_64-apple-darwin` (macOS, Intel)
+- `floo-aarch64-apple-darwin` (macOS, Apple Silicon)
+
+Grab the asset for your platform from the
+[Releases page](https://gitlab.com/ajlebaron/floo/-/releases), make it
+executable, and put it on your PATH:
+
+```sh
+# copy the download URL for your target from the latest release, then:
+curl -L -o floo "<release-asset-url-for-your-target>"
+chmod +x floo
+sudo mv floo /usr/local/bin/floo
+floo version
+```
+
+On macOS, if Gatekeeper blocks the first run, clear the quarantine attribute
+with `xattr -d com.apple.quarantine /usr/local/bin/floo`.
+
 ### Rust (a recent stable toolchain)
 
 ```sh
