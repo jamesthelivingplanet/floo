@@ -270,6 +270,13 @@ fn cmd_claim(
                 };
                 println!("{}", serde_json::to_string_pretty(&out).unwrap());
             } else {
+                // stderr so stdout stays a bare port for $(floo claim ...).
+                if !result.was_new {
+                    eprintln!(
+                        "reusing existing claim for {} -> {}",
+                        service, result.claim.port
+                    );
+                }
                 println!("{}", result.claim.port);
             }
             0

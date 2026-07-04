@@ -253,15 +253,11 @@ pub fn list_claims(conn: &Connection) -> Result<Vec<Claim>, FlooError> {
 // gc
 // ---------------------------------------------------------------------------
 
-/// Find claims eligible for reclamation.
-///
-/// A claim is eligible if it has not been observed listening recently. The
-/// `older_than` argument is SQLite-modifier syntax (e.g., '-7 days').
-///
-/// Callers must run this inside a transaction if they intend to act on the
-/// results and then delete rows, since the OS re-probe here may itself
-/// mutate `last_seen_listening`.
-pub fn find_gc_candidates(
+/// Claims eligible for reclamation (not seen listening recently).
+/// `older_than` is SQLite-modifier syntax, e.g. '-7 days'. Called only by
+/// `gc` inside its transaction, since the re-probe here can mutate
+/// `last_seen_listening`.
+fn find_gc_candidates(
     conn: &Connection,
     older_than: &str,
 ) -> Result<Vec<GcCandidate>, FlooError> {
