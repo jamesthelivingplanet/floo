@@ -17,3 +17,11 @@ variables:
   SECRET_DETECTION_ENABLED: 'true'
 secret_detection:
   stage: secret-detection
+
+cargo_test:
+  stage: test
+  image: rust:latest
+  script:
+  - cd rust
+  - cargo build --release
+  - cargo test
