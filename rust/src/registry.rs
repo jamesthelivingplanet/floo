@@ -69,7 +69,7 @@ impl From<std::io::Error> for FlooError {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Claim {
     pub repo_path: String,
     pub service: String,
@@ -82,9 +82,6 @@ pub struct Claim {
 pub struct ClaimResult {
     pub claim: Claim,
     /// True if we allocated a new row, false if we returned an existing one.
-    /// Part of the public parity surface with the Python/TS registries even
-    /// though the CLI itself only prints `claim.port`.
-    #[allow(dead_code)]
     pub was_new: bool,
 }
 

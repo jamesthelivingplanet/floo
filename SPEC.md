@@ -146,10 +146,10 @@ Behavior:
 ## CLI surface
 
 ```
-floo claim <service> [--prefer <port>]
+floo claim <service> [--prefer <port>] [--json]
 floo release <service>
 floo release --all
-floo list
+floo list [--json]
 floo gc [--older-than <duration>] [--dry-run]
 floo agent-setup
 floo version
@@ -161,3 +161,41 @@ the active repo. They do not error.
 
 `floo claim <service>` prints the port number to stdout on its own line and
 nothing else (so it can be captured with `PORT=$(floo claim web)`).
+
+## JSON output
+
+`claim` and `list` accept a `--json` flag that emits structured JSON to
+stdout instead of the human text format. Without the flag, output is
+unchanged, so `PORT=$(floo claim web)` still yields a bare number.
+
+`floo claim <service> --json` prints a single object: the claim record plus
+`was_new` (true when this invocation allocated a new port, false when it
+returned an existing claim).
+
+    {
+      "repo_path": "/home/me/dev/myapp",
+      "service": "web",
+      "port": 3001,
+      "created_at": "2026-01-02T15:04:05Z",
+      "last_seen_listening": null,
+      "was_new": true
+    }
+
+`floo list --json` prints an array of objects, one per claim ordered by port,
+each being the claim record plus `listening` (the live OS bind probe at print
+time). An empty registry prints `[]`.
+
+    [
+      {
+        "repo_path": "/home/me/dev/myapp",
+        "service": "web",
+        "port": 3001,
+        "created_at": "2026-01-02T15:04:05Z",
+        "last_seen_listening": "2026-01-02T15:05:10Z",
+        "listening": true
+      }
+    ]
+
+Field types: `repo_path`, `service`, `created_at` are strings; `port` is an
+integer; `last_seen_listening` is a string or null; `was_new` and `listening`
+are booleans. Output is pretty-printed JSON followed by a trailing newline.

@@ -8,8 +8,26 @@ mod scanner;
 use std::process::ExitCode;
 
 use registry::FlooError;
+use serde::Serialize;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// JSON shape emitted by `claim --json`: the claim record plus `was_new`.
+#[derive(Serialize)]
+struct ClaimJson<'a> {
+    #[serde(flatten)]
+    claim: &'a registry::Claim,
+    was_new: bool,
+}
+
+/// JSON shape emitted by `list --json`: each claim record plus live
+/// `listening` status observed at print time.
+#[derive(Serialize)]
+struct ListEntryJson<'a> {
+    #[serde(flatten)]
+    claim: &'a registry::Claim,
+    listening: bool,
+}
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -35,7 +53,7 @@ fn run(args: &[String]) -> i32 {
             println!("floo {VERSION}");
             0
         }
-        "list" => cmd_list(),
+        "list" => cmd_list(&args[1..]),
         "claim" => cmd_claim(&args[1..]),
         "release" => cmd_release(&args[1..]),
         "gc" => cmd_gc(&args[1..]),
@@ -54,8 +72,10 @@ fn print_help() {
 commands:
   version                Print floo version
   list                   Show all claims and listening status
+                           --json
   claim <service>        Claim (or fetch) a port for a service
                            --prefer <port>
+                           --json
   release <service>      Release a claim
   release --all          Release every claim
   gc                     Reclaim stale claims
@@ -83,7 +103,8 @@ fn current_repo_path() -> Result<String, FlooError> {
 // command handlers
 // ---------------------------------------------------------------------------
 
-fn cmd_list() -> i32 {
+fn cmd_list(args: &[String]) -> i32 {
+    let json = args.iter().any(|a| a == "--json");
     let conn = match open_db() {
         Ok(c) => c,
         Err(e) => return fail(&e),
@@ -92,6 +113,17 @@ fn cmd_list() -> i32 {
         Ok(c) => c,
         Err(e) => return fail(&e),
     };
+    if json {
+        let entries: Vec<ListEntryJson> = claims
+            .iter()
+            .map(|c| ListEntryJson {
+                claim: c,
+                listening: !scanner::is_port_free_on_os(c.port),
+            })
+            .collect();
+        println!("{}", serde_json::to_string_pretty(&entries).unwrap());
+        return 0;
+    }
     if claims.is_empty() {
         println!("No claims yet. Run `floo claim <service>` in a repo to make one.");
         return 0;
@@ -114,11 +146,13 @@ fn cmd_list() -> i32 {
 struct ClaimArgs {
     service: Option<String>,
     prefer: Option<u16>,
+    json: bool,
 }
 
 fn parse_claim_args(args: &[String]) -> ClaimArgs {
     let mut service = None;
     let mut prefer = None;
+    let mut json = false;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -126,6 +160,7 @@ fn parse_claim_args(args: &[String]) -> ClaimArgs {
                 i += 1;
                 prefer = args.get(i).and_then(|s| s.parse::<u16>().ok());
             }
+            "--json" => json = true,
             other => {
                 if service.is_none() {
                     service = Some(other.to_string());
@@ -134,7 +169,11 @@ fn parse_claim_args(args: &[String]) -> ClaimArgs {
         }
         i += 1;
     }
-    ClaimArgs { service, prefer }
+    ClaimArgs {
+        service,
+        prefer,
+        json,
+    }
 }
 
 fn cmd_claim(raw_args: &[String]) -> i32 {
@@ -154,7 +193,15 @@ fn cmd_claim(raw_args: &[String]) -> i32 {
     };
     match registry::claim(&conn, &rp, &service, args.prefer) {
         Ok(result) => {
-            println!("{}", result.claim.port);
+            if args.json {
+                let out = ClaimJson {
+                    claim: &result.claim,
+                    was_new: result.was_new,
+                };
+                println!("{}", serde_json::to_string_pretty(&out).unwrap());
+            } else {
+                println!("{}", result.claim.port);
+            }
             0
         }
         Err(e) => fail(&e),
@@ -403,6 +450,63 @@ mod tests {
         let args = parse_claim_args(&strs(&["web", "--prefer", "notaport"]));
         assert_eq!(args.service, Some("web".to_string()));
         assert_eq!(args.prefer, None);
+    }
+
+    #[test]
+    fn test_parse_claim_args_json_flag() {
+        let args = parse_claim_args(&strs(&["web", "--json"]));
+        assert_eq!(args.service, Some("web".to_string()));
+        assert!(args.json);
+    }
+
+    #[test]
+    fn test_parse_claim_args_json_not_treated_as_service() {
+        let args = parse_claim_args(&strs(&["--json", "web"]));
+        assert_eq!(args.service, Some("web".to_string()));
+        assert!(args.json);
+    }
+
+    #[test]
+    fn test_claim_json_shape() {
+        let claim = registry::Claim {
+            repo_path: "/repo/A".to_string(),
+            service: "web".to_string(),
+            port: 3000,
+            created_at: "2026-07-04T12:00:00Z".to_string(),
+            last_seen_listening: None,
+        };
+        let out = ClaimJson {
+            claim: &claim,
+            was_new: true,
+        };
+        let v: serde_json::Value =
+            serde_json::from_str(&serde_json::to_string(&out).unwrap()).unwrap();
+        assert_eq!(v["repo_path"], "/repo/A");
+        assert_eq!(v["service"], "web");
+        assert_eq!(v["port"], 3000);
+        assert_eq!(v["created_at"], "2026-07-04T12:00:00Z");
+        assert!(v["last_seen_listening"].is_null());
+        assert_eq!(v["was_new"], true);
+    }
+
+    #[test]
+    fn test_list_entry_json_shape() {
+        let claim = registry::Claim {
+            repo_path: "/repo/A".to_string(),
+            service: "web".to_string(),
+            port: 3001,
+            created_at: "2026-07-04T12:00:00Z".to_string(),
+            last_seen_listening: Some("2026-07-04T13:00:00Z".to_string()),
+        };
+        let out = ListEntryJson {
+            claim: &claim,
+            listening: true,
+        };
+        let v: serde_json::Value =
+            serde_json::from_str(&serde_json::to_string(&out).unwrap()).unwrap();
+        assert_eq!(v["port"], 3001);
+        assert_eq!(v["last_seen_listening"], "2026-07-04T13:00:00Z");
+        assert_eq!(v["listening"], true);
     }
 
     #[test]

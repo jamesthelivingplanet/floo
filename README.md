@@ -106,8 +106,8 @@ rather than duplicating.
 ## Commands
 
 ```sh
-floo claim <service> [--prefer <port>]   # idempotent: same input → same port
-floo list                                # show all claims + listening status
+floo claim <service> [--prefer <port>] [--json]  # idempotent: same input → same port
+floo list [--json]                       # show all claims + listening status
 floo release <service>                   # release one
 floo release --all                       # nuke everything
 floo gc [--older-than '-7 days'] [--dry-run] # reclaim stale claims
@@ -180,6 +180,29 @@ PORT   LISTENING  SERVICE        REPO
 
 `LISTENING=no` means the row is claimed but the server is not running right
 now. The reservation persists.
+
+### Machine-readable output
+
+Pass `--json` to `claim` or `list` for structured output that scripts and
+agents can parse instead of scraping columns:
+
+```sh
+$ floo claim web --json
+{
+  "repo_path": "/home/me/dev/myapp",
+  "service": "web",
+  "port": 3001,
+  "created_at": "2026-01-02T15:04:05Z",
+  "last_seen_listening": null,
+  "was_new": true
+}
+
+$ floo list --json
+[ { "repo_path": "...", "service": "web", "port": 3001, "listening": true, ... } ]
+```
+
+Without `--json`, output is unchanged, so `PORT=$(floo claim web)` still
+returns a bare number.
 
 ### Capturing the port for env vars
 
