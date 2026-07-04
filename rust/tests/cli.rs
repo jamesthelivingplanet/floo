@@ -1,0 +1,147 @@
+//! Integration tests for the floo CLI surface and exit codes.
+//!
+//! Every invocation isolates itself with a fresh XDG_STATE_HOME and HOME so
+//! tests never touch the real registry or the real ~/.claude/CLAUDE.md.
+
+use std::path::Path;
+use std::process::{Command, Output};
+
+use tempfile::TempDir;
+
+/// Build a `floo` Command isolated to the given state/home directories, with
+/// its working directory set to `cwd` (a temp dir is not a git repo, so
+/// repo_root falls back to it, which keeps repo-root detection deterministic).
+fn floo_cmd(xdg_state_home: &Path, home: &Path, cwd: &Path) -> Command {
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_floo"));
+    cmd.env("XDG_STATE_HOME", xdg_state_home)
+        .env("HOME", home)
+        .current_dir(cwd);
+    cmd
+}
+
+/// Run `floo` with the given args in a brand-new, isolated state/home/cwd.
+fn run_isolated(args: &[&str]) -> Output {
+    let state = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    floo_cmd(state.path(), home.path(), state.path())
+        .args(args)
+        .output()
+        .unwrap()
+}
+
+fn stdout_str(output: &Output) -> String {
+    String::from_utf8_lossy(&output.stdout).into_owned()
+}
+
+fn stderr_str(output: &Output) -> String {
+    String::from_utf8_lossy(&output.stderr).into_owned()
+}
+
+#[test]
+fn test_version_command() {
+    let output = run_isolated(&["version"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        stdout_str(&output),
+        format!("floo {}\n", env!("CARGO_PKG_VERSION"))
+    );
+}
+
+#[test]
+fn test_version_flag_long() {
+    let output = run_isolated(&["--version"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        stdout_str(&output),
+        format!("floo {}\n", env!("CARGO_PKG_VERSION"))
+    );
+}
+
+#[test]
+fn test_version_flag_short() {
+    let output = run_isolated(&["-V"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        stdout_str(&output),
+        format!("floo {}\n", env!("CARGO_PKG_VERSION"))
+    );
+}
+
+#[test]
+fn test_no_args_prints_help() {
+    let output = run_isolated(&[]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("usage: floo"));
+}
+
+#[test]
+fn test_help_flag_short() {
+    let output = run_isolated(&["-h"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("usage: floo"));
+}
+
+#[test]
+fn test_help_flag_long() {
+    let output = run_isolated(&["--help"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("usage: floo"));
+}
+
+#[test]
+fn test_unknown_command() {
+    let output = run_isolated(&["frobnicate"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(stderr_str(&output).contains("Unknown command: frobnicate"));
+}
+
+#[test]
+fn test_claim_prints_bare_port_in_range() {
+    let output = run_isolated(&["claim", "web"]);
+    assert_eq!(output.status.code(), Some(0));
+    let out = stdout_str(&output);
+    assert!(out.ends_with('\n'));
+    let port: u16 = out
+        .trim_end()
+        .parse()
+        .expect("stdout should be a bare port number");
+    assert!((3000..=3999).contains(&port));
+    assert_eq!(
+        out.matches('\n').count(),
+        1,
+        "stdout should be exactly the port and a newline"
+    );
+}
+
+#[test]
+fn test_claim_is_idempotent_across_invocations() {
+    let state = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+
+    let first = floo_cmd(state.path(), home.path(), state.path())
+        .args(["claim", "web"])
+        .output()
+        .unwrap();
+    let second = floo_cmd(state.path(), home.path(), state.path())
+        .args(["claim", "web"])
+        .output()
+        .unwrap();
+
+    assert_eq!(first.status.code(), Some(0));
+    assert_eq!(second.status.code(), Some(0));
+    assert_eq!(stdout_str(&first), stdout_str(&second));
+}
+
+#[test]
+fn test_release_missing_claim() {
+    let output = run_isolated(&["release", "nope"]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(stderr_str(&output).contains("No claim for service 'nope' in this repo."));
+}
+
+#[test]
+fn test_list_empty_registry() {
+    let output = run_isolated(&["list"]);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(stdout_str(&output).contains("No claims yet"));
+}

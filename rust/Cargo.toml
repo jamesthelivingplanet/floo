@@ -1,0 +1,16 @@
+[package]
+name = "floo"
+version = "0.0.1"
+edition = "2021"
+license = "MIT"
+description = "Sticky port assignments for parallel coding-agent dev servers."
+
+[[bin]]
+name = "floo"
+path = "src/main.rs"
+
+[dependencies]
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+[dev-dependencies]
+tempfile = "3"

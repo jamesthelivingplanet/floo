@@ -1,9 +1,10 @@
 # floo registry contract
 
 This document is the source of truth for the on-disk format and CLI behavior
-that every floo implementation (Python, TypeScript, future others) must
-follow. The point is that any combination of implementations installed on the
-same machine interoperates against the same registry.
+that floo's implementation (currently a single Rust binary) must follow. It
+remains the contract for any future implementation, so that any combination
+of implementations installed on the same machine interoperates against the
+same registry.
 
 ## On-disk location
 

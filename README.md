@@ -43,28 +43,27 @@ the assignment, which is an accepted tradeoff.
 
 ## Install
 
-floo ships in two implementations that share the same on-disk registry at
-`~/.local/state/floo/registry.db`. You can install either, both, or mix and
-match on the same machine. The shared contract lives in [SPEC.md](./SPEC.md).
+floo is a single Rust binary backed by an on-disk SQLite registry at
+`~/.local/state/floo/registry.db`. The on-disk contract lives in
+[SPEC.md](./SPEC.md).
 
-### Python (Python 3.10+)
+### Rust (a recent stable toolchain)
 
 ```sh
-pipx install git+https://gitlab.com/ajlebaron/floo.git#subdirectory=python
+cargo install --path rust
 ```
 
-### TypeScript (Node 22+)
+or clone and build a release binary yourself:
 
 ```sh
 git clone https://gitlab.com/ajlebaron/floo.git
-cd floo/typescript
-npm install && npm run build && npm link
+cd floo/rust
+cargo build --release
+# binary at target/release/floo
 ```
 
-The TS implementation uses Node 22+'s built-in `node:sqlite` (no native
-deps). Node emits an `ExperimentalWarning` for `node:sqlite` today; the CLI
-suppresses just that one warning so your stdout stays clean for
-`PORT=$(floo claim web)` and friends.
+`rusqlite` is built with the `bundled` feature, so SQLite is compiled in.
+There is no system libsqlite3 dependency, only a C compiler at build time.
 
 Then tell your coding agent about it:
 
@@ -73,7 +72,7 @@ floo agent-setup
 ```
 
 This appends a marker block to `~/.claude/CLAUDE.md` explaining when to call
-`floo claim`. The block is idempotent - running it again updates in place
+`floo claim`. The block is idempotent, so running it again updates in place
 rather than duplicating.
 
 ## Commands
@@ -83,10 +82,14 @@ floo claim <service> [--prefer <port>]   # idempotent: same input → same port
 floo list                                # show all claims + listening status
 floo release <service>                   # release one
 floo release --all                       # nuke everything
-floo gc [--older-than -7d] [--dry-run]   # reclaim stale claims
+floo gc [--older-than '-7 days'] [--dry-run] # reclaim stale claims
 floo agent-setup                         # write the instruction into ~/.claude/CLAUDE.md
 floo version
+floo --version
 ```
+
+`--older-than` takes a SQLite datetime modifier (`-7 days`, `-12 hours`,
+`-30 minutes`), not a shorthand like `-7d`. The default is `-7 days`.
 
 Bare `floo claim` or `floo release` print usage plus the current claims in
 your repo, so an agent (or you) can see what's available without a separate
@@ -190,7 +193,7 @@ claim, same answer, every time.
   claim.
 - **Reclamation**: claims are sticky by default. `floo gc` reclaims rows that
   haven't been seen listening for the grace window (default 7 days), with an
-  extra safety check that re-probes the port at gc time - if a server is
+  extra safety check that re-probes the port at gc time. If a server is
   actively listening right now, the row stays. Run it whenever, or schedule
   it via cron:
 
@@ -198,11 +201,31 @@ claim, same answer, every time.
   0 3 * * * /usr/local/bin/floo gc >/dev/null 2>&1
   ```
 
+## Migration to Rust
+
+floo used to ship as two parallel implementations, Python and TypeScript,
+sharing one on-disk registry. Both have been removed and replaced by a
+single Rust binary in `rust/`. Nothing changes for the on-disk format or the
+CLI surface: `SPEC.md` still documents the exact registry contract, so any
+future implementation can interoperate against the same registry file.
+The agent-setup target is unchanged too: it remains Claude-Code-only
+(`~/.claude/CLAUDE.md`), the same exclusion that existed before this
+migration.
+
 ## Status
 
 Alpha. Built for my own workflow. The agent-setup target is hard-coded to
 Claude Code (`~/.claude/CLAUDE.md`) for now. Multi-agent support
 (Cursor, Aider, Codex, etc.) is deferred until I actually need it.
+
+**Platform: Linux and macOS only.** floo is not supported on Windows today.
+It resolves the home directory via `HOME`, stores its registry under the
+XDG location (`$XDG_STATE_HOME` or `~/.local/state`), and canonicalizes repo
+paths in a Unix-oriented way, none of which map cleanly to Windows yet. The
+`$(floo claim web)` command-substitution pattern also assumes a POSIX shell,
+so it does not work in `cmd.exe` (npm's default shell on Windows). Windows
+support would need a SPEC change for the state-dir location plus a Windows CI
+runner, and is out of scope for now.
 
 ## Why "floo"
 
