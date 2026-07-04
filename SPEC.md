@@ -17,6 +17,15 @@ $XDG_STATE_HOME/floo/registry.db
 Falling back to `~/.local/state/floo/registry.db` if `XDG_STATE_HOME` is unset.
 The directory must be created with parents if it does not exist.
 
+The location can be overridden. Resolution order, highest precedence first:
+
+1. The global `--db <path>` flag, if given.
+2. The `FLOO_DB` environment variable, if set and non-empty.
+3. The XDG default described above.
+
+When an override is in effect, its parent directory must also be created
+with parents if it does not exist.
+
 ## Schema
 
 ```sql
@@ -146,15 +155,19 @@ Behavior:
 ## CLI surface
 
 ```
-floo claim <service> [--prefer <port>] [--json]
-floo release <service>
-floo release --all
-floo list [--json]
-floo gc [--older-than <duration>] [--dry-run]
+floo [--db <path>] claim <service> [--prefer <port>] [--json]
+floo [--db <path>] release <service>
+floo [--db <path>] release --all
+floo [--db <path>] list [--json]
+floo [--db <path>] gc [--older-than <duration>] [--dry-run]
 floo agent-setup
 floo version
 floo --version
 ```
+
+The global `--db <path>` flag may appear anywhere in the argument list and
+overrides the registry location for that invocation, per the resolution
+order in "On-disk location".
 
 Bare `floo claim` and `floo release` print usage plus the current claims in
 the active repo. They do not error.
