@@ -47,51 +47,7 @@ floo is a single Rust binary backed by an on-disk SQLite registry at
 `~/.local/state/floo/registry.db`. The on-disk contract lives in
 [SPEC.md](./SPEC.md).
 
-### Homebrew (macOS)
-
-```sh
-brew install ajlebaron/floo/floo
-```
-
-If you have not added the tap yet, Homebrew will prompt you to; you can also add
-it explicitly first:
-
-```sh
-brew tap ajlebaron/floo https://gitlab.com/ajlebaron/homebrew-floo.git
-brew install floo
-```
-
-The formula builds floo from source (SQLite is bundled, so there is no system
-libsqlite3 dependency). The crates.io package is named `floo-ports`, but the
-installed binary is named `floo`.
-
-### AUR (Arch Linux)
-
-```sh
-paru -S floo        # or: yay -S floo
-```
-
-or build it by hand:
-
-```sh
-git clone https://aur.archlinux.org/floo.git
-cd floo
-makepkg -si
-```
-
-The AUR package builds floo from the published `floo-ports` source with bundled
-SQLite, so it has no system libsqlite3 dependency.
-
-Before floo is published to the AUR, you can build the same package straight
-from this repo with `makepkg`:
-
-```sh
-git clone https://gitlab.com/ajlebaron/floo.git
-cd floo/packaging/aur
-makepkg -si
-```
-
-### crates.io
+### crates.io (preferred)
 
 ```sh
 cargo install floo-ports
@@ -102,7 +58,9 @@ taken), but the installed binary is still named `floo`. If you'd rather
 skip compiling from source, `cargo binstall floo-ports` fetches a prebuilt
 binary instead, provided you have `cargo-binstall` installed.
 
-### Prebuilt binary (no toolchain required)
+### Manual
+
+#### Prebuilt binary (no toolchain required)
 
 Every tagged release publishes prebuilt binaries for Linux and macOS, so you
 can run floo without a Rust toolchain or a C compiler. The binaries bundle
@@ -116,12 +74,21 @@ Supported targets:
 - `floo-aarch64-apple-darwin` (macOS, Apple Silicon)
 
 Grab the asset for your platform from the
-[Releases page](https://gitlab.com/ajlebaron/floo/-/releases), make it
-executable, and put it on your PATH:
+[Releases page](https://gitlab.com/ajlebaron/floo/-/releases) or download
+directly from the generic package registry (URLs are predictable):
 
 ```sh
-# copy the download URL for your target from the latest release, then:
-curl -L -o floo "<release-asset-url-for-your-target>"
+# replace <tag> and <target> with the actual values
+curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/<tag>/floo-<target>"
+chmod +x floo
+sudo mv floo /usr/local/bin/floo
+floo version
+```
+
+For example, to download `floo-x86_64-unknown-linux-gnu` for tag `v0.0.2`:
+
+```sh
+curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.2/floo-x86_64-unknown-linux-gnu"
 chmod +x floo
 sudo mv floo /usr/local/bin/floo
 floo version
@@ -130,13 +97,7 @@ floo version
 On macOS, if Gatekeeper blocks the first run, clear the quarantine attribute
 with `xattr -d com.apple.quarantine /usr/local/bin/floo`.
 
-### Rust (a recent stable toolchain)
-
-```sh
-cargo install --path rust
-```
-
-or clone and build a release binary yourself:
+#### Build from source
 
 ```sh
 git clone https://gitlab.com/ajlebaron/floo.git
