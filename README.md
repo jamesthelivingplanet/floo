@@ -76,7 +76,7 @@ Grab the asset for your platform from the
 directly from the generic package registry (URLs are predictable):
 
 ```sh
-curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.2/floo-<target>"
+curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.3/floo-<target>"
 chmod +x floo
 sudo mv floo /usr/local/bin/floo
 floo version
