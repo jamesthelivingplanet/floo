@@ -117,6 +117,7 @@ rather than duplicating.
 
 ```sh
 floo claim <service> [--prefer <port>] [--json]  # idempotent: same input → same port
+floo url <service>                       # print http://localhost:<port> (claims idempotently)
 floo list [--json]                       # show all claims + listening status
 floo release <service>                   # release one
 floo release --all                       # nuke everything
@@ -230,6 +231,13 @@ log line, a helper script), capture it once and export:
 # .envrc, if you use direnv
 export PORT=$(floo claim web)
 export NEXT_PUBLIC_APP_URL="http://localhost:$PORT"
+```
+
+Or use `floo url` to get the full URL in one step:
+
+```sh
+# .envrc, if you use direnv
+export NEXT_PUBLIC_APP_URL=$(floo url web)
 ```
 
 ### What an agent does
