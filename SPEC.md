@@ -103,6 +103,15 @@ the registry.
 Pure read. Returns every row, ordered by `port`. Listening status is observed
 at print time but never persisted by `list`.
 
+The `LISTENING` value (text `yes`/`no`, or the JSON `listening` boolean) is a
+point-in-time OS bind probe on `127.0.0.1:port`. A `yes` means *something* is
+bound there right now, not necessarily this claim's own dev server. An
+unrelated process that grabbed the same port shows as `yes`, and floo cannot
+distinguish it from the real service because the probe checks occupancy, not
+process identity. This is the same accepted point-in-time race that governs
+the claim-time bind check. Treat `yes` as "the port is occupied," not "the
+service is healthy."
+
 ## GC
 
 A claim is eligible for reclamation when *both* hold:
