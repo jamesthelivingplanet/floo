@@ -78,17 +78,7 @@ Grab the asset for your platform from the
 directly from the generic package registry (URLs are predictable):
 
 ```sh
-# replace <tag> and <target> with the actual values
-curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/<tag>/floo-<target>"
-chmod +x floo
-sudo mv floo /usr/local/bin/floo
-floo version
-```
-
-For example, to download `floo-x86_64-unknown-linux-gnu` for tag `v0.0.2`:
-
-```sh
-curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.2/floo-x86_64-unknown-linux-gnu"
+curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.2/floo-<target>"
 chmod +x floo
 sudo mv floo /usr/local/bin/floo
 floo version
@@ -279,17 +269,6 @@ claim, same answer, every time.
   ```cron
   0 3 * * * /usr/local/bin/floo gc >/dev/null 2>&1
   ```
-
-## Migration to Rust
-
-floo used to ship as two parallel implementations, Python and TypeScript,
-sharing one on-disk registry. Both have been removed and replaced by a
-single Rust binary in `rust/`. Nothing changes for the on-disk format or the
-CLI surface: `SPEC.md` still documents the exact registry contract, so any
-future implementation can interoperate against the same registry file.
-The agent-setup target is unchanged too: it remains Claude-Code-only
-(`~/.claude/CLAUDE.md`), the same exclusion that existed before this
-migration.
 
 ## Status
 
