@@ -156,6 +156,7 @@ Behavior:
 
 ```
 floo [--db <path>] claim <service> [--prefer <port>] [--json]
+floo [--db <path>] url <service>
 floo [--db <path>] release <service>
 floo [--db <path>] release --all
 floo [--db <path>] list [--json]
@@ -182,6 +183,12 @@ nothing else (so it can be captured with `PORT=$(floo claim web)`). When it
 returns an existing claim for the same (repo, service), it also prints a
 short note to stderr (for example `reusing existing claim for web -> 3000`)
 so the reuse is visible; stdout is unaffected.
+
+`floo url <service>` claims the port the same way (idempotent, sticky) and
+prints `http://localhost:<port>` on its own line and nothing else, so it can
+be dropped straight into a URL, for example
+`NEXT_PUBLIC_APP_URL=$(floo url web)`. The port matches what `floo claim
+<service>` returns for the same repo and service.
 
 ## JSON output
 

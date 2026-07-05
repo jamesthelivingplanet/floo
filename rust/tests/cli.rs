@@ -173,6 +173,28 @@ fn test_claim_reuse_prints_stderr_note_but_bare_port_on_stdout() {
 }
 
 #[test]
+fn test_url_prints_localhost_url_matching_claim() {
+    let state = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+
+    let claim = floo_cmd(state.path(), home.path(), state.path())
+        .args(["claim", "web"])
+        .output()
+        .unwrap();
+    let url = floo_cmd(state.path(), home.path(), state.path())
+        .args(["url", "web"])
+        .output()
+        .unwrap();
+
+    assert_eq!(claim.status.code(), Some(0));
+    assert_eq!(url.status.code(), Some(0));
+
+    let port = stdout_str(&claim);
+    let port = port.trim_end();
+    assert_eq!(stdout_str(&url), format!("http://localhost:{port}\n"));
+}
+
+#[test]
 fn test_release_missing_claim() {
     let output = run_isolated(&["release", "nope"]);
     assert_eq!(output.status.code(), Some(1));

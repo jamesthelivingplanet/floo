@@ -27,6 +27,7 @@ commands:
   claim <service>        Claim (or fetch) a port for a service
                            --prefer <port>
                            --json
+  url <service>          Print http://localhost:<port> for a service
   release <service>      Release a claim
   release --all          Release every claim
   gc                     Reclaim stale claims
@@ -86,6 +87,11 @@ enum Command {
         /// Emit the claim as JSON instead of a bare port.
         #[arg(long)]
         json: bool,
+    },
+    /// Print the localhost URL for a service, claiming the port.
+    Url {
+        /// Service label, for example web, api, storybook.
+        service: Option<String>,
     },
     /// Release a claim, or every claim with --all.
     Release {
@@ -176,6 +182,7 @@ fn run(cli: Cli) -> i32 {
             prefer,
             json,
         }) => cmd_claim(service, prefer, json, db_override),
+        Some(Command::Url { service }) => cmd_url(service, db_override),
         Some(Command::Release { service, all }) => cmd_release(service, all, db_override),
         Some(Command::Gc {
             older_than,
@@ -279,6 +286,36 @@ fn cmd_claim(
                 }
                 println!("{}", result.claim.port);
             }
+            0
+        }
+        Err(e) => fail(&e),
+    }
+}
+
+fn cmd_url(service: Option<String>, db_override: Option<&str>) -> i32 {
+    let Some(service) = service else {
+        println!("usage: floo url <service>");
+        return 0;
+    };
+
+    let rp = match current_repo_path() {
+        Ok(rp) => rp,
+        Err(e) => return fail(&e),
+    };
+    let conn = match open_db(db_override) {
+        Ok(c) => c,
+        Err(e) => return fail(&e),
+    };
+    match registry::claim(&conn, &rp, &service, None) {
+        Ok(result) => {
+            // stderr so stdout stays just the URL for $(floo url ...).
+            if !result.was_new {
+                eprintln!(
+                    "reusing existing claim for {} -> {}",
+                    service, result.claim.port
+                );
+            }
+            println!("http://localhost:{}", result.claim.port);
             0
         }
         Err(e) => fail(&e),
