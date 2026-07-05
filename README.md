@@ -197,6 +197,13 @@ PORT   LISTENING  SERVICE        REPO
 `LISTENING=no` means the row is claimed but the server is not running right
 now. The reservation persists.
 
+`LISTENING=yes` is a point-in-time OS bind probe, not a health check. It only
+confirms that *something* is bound to the port right now, not that the
+listener is this claim's own dev server. An unrelated process (Docker, a
+stray script) that grabbed the same port shows as `yes`, and floo cannot tell
+it apart from your service. Read `yes` as "the port is occupied," not "my
+service is up." The same applies to the `listening` field in `--json` output.
+
 ### Machine-readable output
 
 Pass `--json` to `claim` or `list` for structured output that scripts and
