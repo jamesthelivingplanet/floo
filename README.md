@@ -73,10 +73,19 @@ Supported targets:
 
 Grab the asset for your platform from the
 [Releases page](https://gitlab.com/ajlebaron/floo/-/releases) or download
-directly from the generic package registry (URLs are predictable):
+directly from the generic package registry:
 
 ```sh
-curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.3/floo-<target>"
+# Linux x86_64 (Intel/AMD)
+curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.3/floo-x86_64-unknown-linux-gnu"
+
+# Linux ARM64
+curl -L -o floo "https://gitlab.com/api/v4/projects/ajlebaron%2Ffloo/packages/generic/floo/v0.0.3/floo-aarch64-unknown-linux-gnu"
+```
+
+Then make it executable and put it on your PATH:
+
+```sh
 chmod +x floo
 sudo mv floo /usr/local/bin/floo
 floo version
